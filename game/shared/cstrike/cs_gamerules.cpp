@@ -341,7 +341,7 @@ ConVar cl_autohelp(
 
 	ConVar mp_startmoney( 
 		"mp_startmoney", 
-		"800", 
+		"16000", 
 		FCVAR_REPLICATED | FCVAR_NOTIFY,
 		"amount of money each player gets when they reset",
 		true, 800,
@@ -353,7 +353,7 @@ ConVar cl_autohelp(
 		FCVAR_REPLICATED | FCVAR_NOTIFY,
 		"How many minutes each round takes.",
 		true, 1,	// min value
-		true, 9		// max value
+		true, 99	// max value
 		);
 
 	ConVar mp_freezetime( 
@@ -1472,7 +1472,7 @@ ConVar cl_autohelp(
 				}
 				else			
 				{
-					pCSScorer->AddAccount( 300 );
+					pCSScorer->AddAccount( 6000 );
 				}
 			}
 
@@ -1732,7 +1732,9 @@ ConVar cl_autohelp(
 
 		/****************************** BOMB CHECK ********************************************************/
 		if ( BombRoundEndCheck( bNeededPlayers ) )
-			return true;
+			return false;
+		
+
 
 
 		/***************************** TEAM EXTERMINATION CHECK!! *********************************************************/
@@ -2236,12 +2238,11 @@ ConVar cl_autohelp(
 	}
 
 
-	void CCSGameRules::ReadMultiplayCvars()
+void CCSGameRules::ReadMultiplayCvars()
 	{
 		m_iRoundTime = (int)(mp_roundtime.GetFloat() * 60);
 		m_iFreezeTime = mp_freezetime.GetInt();
 	}
-
 
 	void CCSGameRules::RestartRound()
 	{
@@ -2428,15 +2429,16 @@ ConVar cl_autohelp(
 		
 		
 		// Check to see if this map has a bomb target in it
+		//TODO: костыль ,надо будет придумать другое
 
 		if ( gEntList.FindEntityByClassname( NULL, "func_bomb_target" ) )
 		{
-			m_bMapHasBombTarget		= true;
-			m_bMapHasBombZone		= true;
+			m_bMapHasBombTarget		= false;
+			m_bMapHasBombZone		= false;
 		}
 		else if ( gEntList.FindEntityByClassname( NULL, "info_bomb_target" ) )
 		{
-			m_bMapHasBombTarget		= true;
+			m_bMapHasBombTarget		= false;
 			m_bMapHasBombZone		= false;
 		}
 		else
@@ -4514,14 +4516,15 @@ ConVar cl_autohelp(
 		}
 #endif		
 		// Check to see if this map has a bomb target in it
+		//TODO:Тоже костыль,надо будет придумать другое
 		if ( gEntList.FindEntityByClassname( NULL, "func_bomb_target" ) )
 		{
-			m_bMapHasBombTarget		= true;
-			m_bMapHasBombZone		= true;
+			m_bMapHasBombTarget		= false;
+			m_bMapHasBombZone		= false;
 		}
 		else if ( gEntList.FindEntityByClassname( NULL, "info_bomb_target" ) )
 		{
-			m_bMapHasBombTarget		= true;
+			m_bMapHasBombTarget		= false;
 			m_bMapHasBombZone		= false;
 		}
 		else
@@ -4715,21 +4718,7 @@ ConVar cl_autohelp(
 
 	bool CCSGameRules::IsThereABomber()
 	{
-		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
-		{
-			CCSPlayer *pPlayer = CCSPlayer::Instance( i );
-
-			if ( pPlayer && !FNullEnt( pPlayer->edict() ) )
-			{
-				if ( pPlayer->GetTeamNumber() == TEAM_CT )
-					continue;
-
-				if ( pPlayer->HasC4() )
-					 return true; //There you are.
-			}
-		}
-
-		//Didn't find a bomber.
+		//хуй а не пачка
 		return false;
 	}
 
@@ -4743,17 +4732,50 @@ ConVar cl_autohelp(
 	CBaseEntity *CCSGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 	{
 #ifndef DEATHMATCH
-		// gat valid spwan point
-		CBaseEntity *pSpawnSpot = pPlayer->EntSelectSpawnPoint();
+//AndraMidoxXx: проверка на нахождение игрока в спавнпоинте,если он там есть то игра выбирает другой 
+//или же ждет освобождения точки если все заняты
+//если вдруг найду баги то починю
+CBaseEntity* pSpawnSpot = nullptr;
 
-		// drop down to ground
-		Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
+while (true) {
+    pSpawnSpot = pPlayer->EntSelectSpawnPoint();
 
-		// Move the player to the place it said.
-		pPlayer->Teleport( &pSpawnSpot->GetAbsOrigin(), &pSpawnSpot->GetLocalAngles(), &vec3_origin );
-		pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
-		
-		return pSpawnSpot
+    // Проверка, что выбранная точка спавна не занята другим игроком
+    bool isSpawnSpotOccupied = false;
+    Vector spawnSpotOrigin = pSpawnSpot->GetAbsOrigin();
+    
+    for (int i = 1; i <= gpGlobals->maxClients; i++) {
+        CBasePlayer* pOtherPlayer = UTIL_PlayerByIndex(i);
+        
+        if (pOtherPlayer && pOtherPlayer != pPlayer) {
+            Vector otherPlayerOrigin = pOtherPlayer->GetAbsOrigin();
+            
+            // радиус,при котором игра защитывает игрока в спавне
+            float spawnRadius = 100.0f; 
+            float distance = (otherPlayerOrigin - spawnSpotOrigin).Length();
+            
+            if (distance < spawnRadius) {
+                isSpawnSpotOccupied = true;
+                break; // Если точка спавна занята,то выбираем другую нахуй
+            }
+        }
+    }
+
+    // если какая-либо точка не будет занята то спавнимся
+    if (!isSpawnSpotOccupied) {
+        break;
+    }
+    
+    // иначе ждем
+    UTIL_Sleep(1000); // задержка в 1 секунду
+}
+
+// дальше все по дефолту
+Vector GroundPos = DropToGround(pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX);
+pPlayer->Teleport(&pSpawnSpot->GetAbsOrigin(), &pSpawnSpot->GetLocalAngles(), &vec3_origin);
+pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
+
+return pSpawnSpot;
 #else
 		int RandomPoint = random->RandomInt(0 , SpawnPos.Size() -1 );
 		Vector SpawnOrigin = SpawnPos.Element(RandomPoint);
