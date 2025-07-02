@@ -2938,19 +2938,9 @@ void GLMContext::CleanupTex( GLenum texBind, GLMTexLayout* pLayout, GLuint tex )
 	for ( int i = 0; i < pLayout->m_mipCount; ++i )
 	{
 		int mipDim = ( i == 0 ) ? kDeletedTextureDim : 0;
-		if ( pLayout->m_format->m_chunkSize != 1 )
-		{
-			const int chunks = ( mipDim + ( pLayout->m_format->m_chunkSize - 1 ) ) / pLayout->m_format->m_chunkSize;
-			const int dataSize = ( chunks * chunks ) * pLayout->m_format->m_bytesPerSquareChunk;
-			Assert( dataSize <= ( sizeof( uint32) * ARRAYSIZE( g_garbageTextureBits ) ) );
-
-			CompressedTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, dataSize, NULL );
-		}
-		else
-		{
-			convert_texture( pLayout->m_format->m_glIntFormat, mipDim, mipDim, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
-			gGL->glTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
-		}
+		
+		convert_texture( pLayout->m_format->m_glIntFormat, mipDim, mipDim, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
+		gGL->glTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
 	}
 
 	gGL->glBindTexture( texBind, oldTex );
