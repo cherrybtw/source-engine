@@ -1238,8 +1238,8 @@ void Frame::PerformLayout()
 	}
 
 #if !defined( _X360 )
-	int DRAGGER_SIZE = GetDraggerSize();
-	int CORNER_SIZE = GetCornerSize();
+	int DRAGGER_SIZE = GetDraggerSize() * scale;
+	int CORNER_SIZE = GetCornerSize() * scale;
 	int CORNER_SIZE2 = CORNER_SIZE * 2;
 	int BOTTOMRIGHTSIZE = GetBottomRightSize() * scale;
 
@@ -1602,13 +1602,25 @@ void Frame::PaintBackground()
 
 	if (_drawTitleBar)
 	{
+		float scale = 1;
+		if (IsProportional())
+        	{
+                	int screenW, screenH;
+                	surface()->GetScreenSize(screenW, screenH);
+
+                	int proW, proH;
+                	surface()->GetProportionalBase(proW, proH);
+
+                	scale = ((float)(screenH) / (float)(proH));
+        	}
+
 		int wide = GetWide();
-		int tall = surface()->GetFontTall(_title->GetFont());
+		int tall = surface()->GetFontTall(_title->GetFont()) * scale;
 
 		// caption
 		surface()->DrawSetColor(titleColor);
-		int inset = m_bSmallCaption ? 3 : 5;
-		int captionHeight = m_bSmallCaption ? 14: 28;
+		int inset = (m_bSmallCaption ? 3 : 5) * scale;
+		int captionHeight = (m_bSmallCaption ? 14: 28) * scale;
 
 		surface()->DrawFilledRect(inset, inset, wide - inset, captionHeight );
 		
