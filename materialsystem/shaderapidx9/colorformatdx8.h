@@ -20,7 +20,11 @@
 #define ATIFMT_ATI2N ((D3DFORMAT) MAKEFOURCC('A', 'T', 'I', '2'))
 #define ATIFMT_ATI1N ((D3DFORMAT) MAKEFOURCC('A', 'T', 'I', '1'))
 
-// FOURCC formats for nVidia shadow depth textures
+// FOURCC formats for ETC2 compressed textures
+#define D3DFMT_ETC2_RGB8	((D3DFORMAT)(MAKEFOURCC('E','T','C','N'))) // N - no alpha
+#define D3DFMT_ETC2_RGBA8	((D3DFORMAT)(MAKEFOURCC('E','T','C','A'))) // A - alpha present
+
+//  FOURCC formats for nVidia shadow depth textures
 #define NVFMT_RAWZ		((D3DFORMAT)(MAKEFOURCC('R','A','W','Z')))
 #define NVFMT_INTZ		((D3DFORMAT)(MAKEFOURCC('I','N','T','Z')))
 

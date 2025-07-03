@@ -3170,6 +3170,7 @@ bool CTexture::SetupDebuggingTextures( IVTFTexture *pVTFTexture )
 // Converts the texture to the actual format
 // Returns true if conversion applied, false otherwise
 //-----------------------------------------------------------------------------
+ConVar mat_enable_etc2_tex_compression( "mat_enable_etc2_tex_compression", "0", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Enable ETC2 texture compression for textures. \n (0) - Convert to uncompressed RGB(A) format / (1) - Convert to ETC2 format" );
 bool CTexture::ConvertToActualFormat( IVTFTexture *pVTFTexture )
 {
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
@@ -3187,12 +3188,12 @@ bool CTexture::ConvertToActualFormat( IVTFTexture *pVTFTexture )
 		switch (pVTFTexture->Format())
 			{
 				case IMAGE_FORMAT_DXT1:
-					dstFormat = IMAGE_FORMAT_RGB888;
+					dstFormat = mat_enable_etc2_tex_compression.GetBool() ? IMAGE_FORMAT_ETC2_RGB8 : IMAGE_FORMAT_RGB888;
 					break;
 
 				case IMAGE_FORMAT_DXT3:
 				case IMAGE_FORMAT_DXT5:
-					dstFormat = IMAGE_FORMAT_RGBA8888;
+					dstFormat = mat_enable_etc2_tex_compression.GetBool() ? IMAGE_FORMAT_ETC2_RGBA8 : IMAGE_FORMAT_RGBA8888;
 					break;
 
 				default:

@@ -16,6 +16,10 @@ def configure(conf):
 
 def build(bld):
 	source = [
+		'etc2lib/etc_android.cpp',
+		'etc2lib/etc_rg_etc1.cpp',
+		'etc2lib/etc2_encoder.cpp',
+		'etc2lib/etc.cpp',
 		'ImageByteSwap.cpp',
 		'colorconversion.cpp',
 		'float_bm.cpp',

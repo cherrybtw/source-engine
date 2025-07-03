@@ -111,6 +111,10 @@ const GLMValueEntry_t g_d3d_formats[] =
 	VE( D3DFMT_ATI_2N ),
 	VE( D3DFMT_ATI_1N ),
 
+	// ETC2 compressed formats (for ToGL(ES) abstraction)
+	VE( D3DFMT_ETC2_RGB8 ),	// N - no alpha
+	VE( D3DFMT_ETC2_RGBA8 ),	// A - alpha present
+
 	VE( D3DFMT_UNKNOWN ),
 
 	VE( TERMVALUE )

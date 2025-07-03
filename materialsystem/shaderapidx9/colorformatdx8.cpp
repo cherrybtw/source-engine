@@ -356,6 +356,14 @@ D3DFORMAT GetNearestD3DColorFormat( ImageFormat fmt,
 		if ( TestTextureFormat( ATIFMT_ATI1N, isRenderTarget, bIsVertexTexture, bIsFilterableRequired ) )
 			return ATIFMT_ATI1N;
 		break;
+	case IMAGE_FORMAT_ETC2_RGB8:
+		if ( TestTextureFormat( D3DFMT_ETC2_RGB8, isRenderTarget, bIsVertexTexture, bIsFilterableRequired ) )
+			return D3DFMT_ETC2_RGB8;
+		break;
+	case IMAGE_FORMAT_ETC2_RGBA8:
+		if ( TestTextureFormat( D3DFMT_ETC2_RGBA8, isRenderTarget, bIsVertexTexture, bIsFilterableRequired ) )
+			return D3DFMT_ETC2_RGBA8;
+		break;
 	}
 
 	return D3DFMT_UNKNOWN;

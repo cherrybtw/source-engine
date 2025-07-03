@@ -163,6 +163,9 @@ const GLMTexFormatDesc g_formatDescTable[] =
 		D3DFMT_ATI_2N		= 0x32495441,	// MAKEFOURCC('A', 'T', 'I', '2')
 		D3DFMT_ATI_1N		= 0x31495441,	// MAKEFOURCC('A', 'T', 'I', '1')
 	*/
+	// fakey formats for ToGL(ES) abstraction layer
+	{ "_ETC2_RGB8",		D3DFMT_ETC2_RGB8,		0x9274/*GL_COMPRESSED_RGB8_ETC2*/,			0x9275/*GL_COMPRESSED_SRGB8_ETC2*/,			GL_RGB,					GL_UNSIGNED_BYTE,				4, 8 },	// N - no alpha
+	{ "_ETC2_RGBA8",	D3DFMT_ETC2_RGBA8,			0x9278/*GL_COMPRESSED_RGBA8_ETC2_EAC*/,		0x9279/*GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC*/,	GL_RGBA,				GL_UNSIGNED_BYTE,				4, 16 },	// A - alpha present
 };
 
 int	g_formatDescTableCount = sizeof(g_formatDescTable) / sizeof( g_formatDescTable[0] );
@@ -484,6 +487,13 @@ GLMTexLayout *CGLMTexLayoutTable::NewLayoutRef( GLMTexLayoutKey *pDesiredKey )
 	//bool					compression = (formatDesc->m_chunkSize > 1) != 0;
 	if (!formatDesc)
 	{
+		fprintf(stderr,
+    			"!!! GLMStop: format=%d, flags=0x%X, target=%d, size=%dx%dx%d\n",
+    			key->m_texFormat,
+    			key->m_texFlags,
+    			key->m_texGLTarget,
+    			key->m_xSize, key->m_ySize, key->m_zSize);
+
 		GLMStop();	// bad news
 	}
 

@@ -28,6 +28,7 @@ typedef int32 *DWORD_PTR;
 #define STB_DXT_IMPLEMENTATION
 #include "stb_dxt.h"
 
+#include "etc2lib/etc.h"
 // Should be last include
 #include "tier0/memdbgon.h"
 
@@ -1415,6 +1416,22 @@ bool ConvertImageFormat( const uint8 *src, ImageFormat srcImageFormat,
 				ConvertFromDXT1( src, ( BGRA4444_t * )dst, width, height );
 				return true;
 			}
+			
+			if (dstImageFormat == IMAGE_FORMAT_ETC2_RGB8)
+			{
+				ConvertFromDXT1( src, ( RGB888_t * )dst, width, height );
+
+				int encodedSize = 0;
+				unsigned char *ETC2tex = etc2_encode_image_rgb( dst, width, height, &encodedSize );
+				if ( !ETC2tex )
+				{
+					Warning( "Failed to encode ETC2_RGB8 texture.\n" );
+					return false;
+				}
+				memcpy(dst, ETC2tex, encodedSize);
+				free(ETC2tex);
+				return true;
+			}
 		}
 		else if ( srcImageFormat == IMAGE_FORMAT_ATI2N )
 		{
@@ -1469,6 +1486,21 @@ bool ConvertImageFormat( const uint8 *src, ImageFormat srcImageFormat,
 			if ( dstImageFormat == IMAGE_FORMAT_BGRA4444 )
 			{
 				ConvertFromDXT5( src, ( BGRA4444_t * )dst, width, height );
+				return true;
+			}
+			if (dstImageFormat == IMAGE_FORMAT_ETC2_RGBA8)
+			{
+				ConvertFromDXT5( src, ( RGBA8888_t * )dst, width, height );
+
+				int encodedSize = 0;
+				unsigned char *ETC2tex = etc2_encode_image_rgba( dst, width, height, &encodedSize );
+				if ( !ETC2tex )
+				{
+					Warning( "Failed to encode ETC2_RGBA8 texture.\n" );
+					return false;
+				}
+				memcpy(dst, ETC2tex, encodedSize);
+				free(ETC2tex);
 				return true;
 			}
 		}

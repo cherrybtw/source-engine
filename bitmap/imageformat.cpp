@@ -44,6 +44,8 @@ static const ImageFormatInfo_t g_ImageFormatInfo[] =
 	{ "DXT1",						0, 0, 0, 0, 0, true },			// IMAGE_FORMAT_DXT1
 	{ "DXT3",						0, 0, 0, 0, 8, true },			// IMAGE_FORMAT_DXT3
 	{ "DXT5",						0, 0, 0, 0, 8, true },			// IMAGE_FORMAT_DXT5
+	{ "ETC2_RGB8",					0, 0, 0, 0, 0, true },			// IMAGE_FORMAT_ETC2_RGB8
+	{ "ETC2_RGBA8",					0, 0, 0, 0, 0, true },			// IMAGE_FORMAT_ETC2_RGBA8
 	{ "BGRX8888",					4, 8, 8, 8, 0, false },			// IMAGE_FORMAT_BGRX8888
 	{ "BGR565",						2, 5, 6, 5, 0, false },			// IMAGE_FORMAT_BGR565
 	{ "BGRX5551",					2, 5, 5, 5, 0, false },			// IMAGE_FORMAT_BGRX5551
@@ -156,12 +158,14 @@ int GetMemRequired( int width, int height, int depth, ImageFormat imageFormat, b
 			case IMAGE_FORMAT_DXT1:
 			case IMAGE_FORMAT_DXT1_RUNTIME:
 			case IMAGE_FORMAT_ATI1N:
+			case IMAGE_FORMAT_ETC2_RGB8:
 				return numBlocks * 8;
 
 			case IMAGE_FORMAT_DXT3:
 			case IMAGE_FORMAT_DXT5:
 			case IMAGE_FORMAT_DXT5_RUNTIME:
 			case IMAGE_FORMAT_ATI2N:
+			case IMAGE_FORMAT_ETC2_RGBA8:
 				return numBlocks * 16;
 			}
 
@@ -364,6 +368,13 @@ ImageFormat D3DFormatToImageFormat( D3DFORMAT format )
 		return IMAGE_FORMAT_NV_INTZ;
 	case (D3DFORMAT)(MAKEFOURCC('N','U','L','L')):
 		return IMAGE_FORMAT_NV_NULL;
+
+	// ETC2 formats (for ToGL(ES) abstraction)
+	case (D3DFORMAT)(MAKEFOURCC('E','T','C','N')): // N - no alpha
+		return IMAGE_FORMAT_ETC2_RGB8;
+	case (D3DFORMAT)(MAKEFOURCC('E','T','C','A')): // A - alpha present
+		return IMAGE_FORMAT_ETC2_RGBA8;
+	
 	case D3DFMT_D16:
 #if !defined( _X360 )
 		return IMAGE_FORMAT_NV_DST16;
@@ -491,6 +502,12 @@ D3DFORMAT ImageFormatToD3DFormat( ImageFormat format )
 		return (D3DFORMAT)(MAKEFOURCC('A','T','I','1'));
 	case IMAGE_FORMAT_ATI2N:
 		return (D3DFORMAT)(MAKEFOURCC('A','T','I','2'));
+
+	// ETC2 formats (for ToGL(ES) abstraction)
+	case IMAGE_FORMAT_ETC2_RGB8:
+		return (D3DFORMAT)(MAKEFOURCC('E','T','C','N')); //N - no alpha
+	case IMAGE_FORMAT_ETC2_RGBA8:
+		return (D3DFORMAT)(MAKEFOURCC('E','T','C','A')); //A - alpha present
 
 #if defined( _X360 )
 	case IMAGE_FORMAT_LINEAR_BGRA8888:
