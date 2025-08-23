@@ -1814,22 +1814,22 @@ inline void MatrixBuildScale( VMatrix &dst, const Vector& scale )
 //
 // This can improve performance by up to ~30–50% for this function,
 // especially when building many projection matrices per frame.
-inline void MatrixBuildPerspective(VMatrix &dst, float fovX, float fovY, float zNear, float zFar)
-{
-    float width  = 2.0f * zNear * tan(fovX * (M_PI / 180.0f) * 0.5f);
-    float height = 2.0f * zNear * tan(fovY * (M_PI / 180.0f) * 0.5f);
+inline void MatrixBuildPerspective( VMatrix &dst, float fovX, float fovY, float zNear, float zFar )
+{ 
+    float width = tan( fovX * ( M_PI/180.0f ) * 0.5f );
+    float height = tan( fovY * ( M_PI/180.0f ) * 0.5f );
 
-    float a = 2.0f * zNear / width;
-    float b = 2.0f * zNear / height;
-    float c = -zFar / (zNear - zFar);
-    float d = zNear * zFar / (zNear - zFar);
+    float a = 1.0f / width;
+    float b = 1.0f / height;
+    float c = -zFar / ( zNear - zFar );
+    float d = zNear * zFar / ( zNear - zFar );
 
     // Immediately construct the final matrix,
     dst.Init(
-        -a * 0.5f,   0.0f,        0.0f,   0.5f,     // X: negate + scale + shift
-         0.0f,      -b * 0.5f,    0.0f,   0.5f,     // Y: negate + scale + shift
-         0.0f,       0.0f,        c,      d,        // Z: perspective depth
-         0.0f,       0.0f,        1.0f,   0.0f      // W: perspective divide
+        -0.5f * a, 0.0f,      0.5f, 0.0f,
+         0.0f,    -0.5f * b,  0.5f, 0.0f,
+         0.0f,     0.0f,      c,    d,
+         0.0f,     0.0f,      1.0f, 0.0f
     );
 }
 
