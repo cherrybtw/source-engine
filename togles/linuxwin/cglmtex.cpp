@@ -34,7 +34,7 @@ extern "C" {
 
 #include "tier0/icommandline.h"
 #include "glmtexinlines.h"
-
+#include "mathlib/compressed_vector.h"
 // memdbgon -must- be the last include file in a .cpp file.
 #include "tier0/memdbgon.h"
 
@@ -3259,74 +3259,6 @@ const char *get_enum_str(uint val)
 	return "UNKNOWN";
 }
 
-typedef union {
-    uint16_t bin;
-    struct {
-        uint16_t sign:1;
-        uint16_t exp:5;
-        uint16_t mant:10;
-    } x;
-} halffloat_t;
-
-typedef union {
-    float f;
-    uint32_t bin;
-    struct {
-        uint32_t sign:1;
-        uint32_t exp:8;
-        uint32_t mant:23;
-    } x;
-} fullfloat_t;
-
-static inline float float_h2f(halffloat_t t)
-{
-    fullfloat_t tmp;
-    tmp.x.sign = t.x.sign;  // copy sign
-    if(t.x.exp==0 /*&& t.mant==0*/) {
-    // 0 and denormal?
-        tmp.x.exp=0;
-        tmp.x.mant=0;
-    } else if (t.x.exp==31) {
-    // Inf / NaN
-        tmp.x.exp=255;
-        tmp.x.mant=(t.x.mant<<13);
-    } else {
-        tmp.x.mant=(t.x.mant<<13);
-        tmp.x.exp = t.x.exp+0x38;
-    }
-
-    return tmp.f;
-}
-
-static inline halffloat_t float_f2h(float f)
-{
-    fullfloat_t tmp;
-    halffloat_t ret;
-    tmp.f = f;
-    ret.x.sign = tmp.x.sign;
-    if (tmp.x.exp == 0) {
-        // O and denormal
-        ret.bin = 0;
-    } else if (tmp.x.exp==255) {
-        // Inf / NaN
-        ret.x.exp = 31;
-        ret.x.mant = tmp.x.mant>>13;
-    } else if(tmp.x.exp>0x71) {
-        // flush to 0
-        ret.x.exp = 0;
-        ret.x.mant = 0;
-    } else if(tmp.x.exp<0x8e) {
-        // clamp to max
-        ret.x.exp = 30;
-        ret.x.mant = 1023;
-    } else {
-        ret.x.exp = tmp.x.exp - 38;
-        ret.x.mant = tmp.x.mant>>13;
-    }
-
-    return ret;
-}
-
 void convert_texture( GLenum &internalformat, GLsizei width, GLsizei height, GLenum &format, GLenum &type, void *data )
 {
 	if( format == GL_BGRA ) format = GL_RGBA;
@@ -3335,31 +3267,27 @@ void convert_texture( GLenum &internalformat, GLsizei width, GLsizei height, GLe
 	if( internalformat == GL_SRGB8 && format == GL_RGBA )
 		internalformat = GL_SRGB8_ALPHA8;
 
-	if( format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA )
-		internalformat = format;
+	if ( format == GL_LUMINANCE )
+    	internalformat = GL_LUMINANCE8;
+	else if ( format == GL_LUMINANCE_ALPHA )
+    	internalformat = GL_LUMINANCE8_ALPHA8;
 
-	if( data )
+	if( data && internalformat == GL_RGBA16 && !gGL->m_bHave_GL_EXT_texture_norm16 && gGL->m_bHave_GL_EXT_color_buffer_half_float )
 	{
-		if( internalformat == GL_RGBA16 && !gGL->m_bHave_GL_EXT_texture_norm16 )
-		{
-			uint16_t *_data = (uint16_t*)data;
-			uint8_t *new_data = (uint8_t*)data;
+		uint16_t *src = (uint16_t*)data;
+        uint16_t *dst = (uint16_t*)data;
 
-			for( int i = 0; i < width*height*4; i+=4 )
-			{
-				new_data[i] = _data[i] >> 8;
-				new_data[i+1] = _data[i+1] >> 8;
-				new_data[i+2] = _data[i+2] >> 8;
-				new_data[i+3] = _data[i+3] >> 8;
-			}
-		}
-	}
-
-	if( internalformat == GL_RGBA16 && !gGL->m_bHave_GL_EXT_texture_norm16 )
-	{
-		internalformat = GL_RGBA;
-		format = GL_RGBA;
-		type = GL_UNSIGNED_BYTE;
+        const int count = width * height * 4;
+        for ( int i = 0; i < count; i++ )
+        {
+            float f = src[i] / 65535.0f;
+            float16 h;
+			h.SetFloat( f ) ;
+			dst[i] = h.GetBits();
+        }
+		internalformat = GL_RGBA16F;
+        format         = GL_RGBA;
+        type           = GL_HALF_FLOAT;
 	}
 
 	if( type == GL_UNSIGNED_INT_8_8_8_8_REV )
